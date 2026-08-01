@@ -263,3 +263,9 @@ poetry.toml
 
 # LSP config files
 pyrightconfig.json
+
+# yt_dlp Download Dateien
+*.mp3
+*.wav
+*.m4a
+*.webm
