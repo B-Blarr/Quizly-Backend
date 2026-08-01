@@ -37,7 +37,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             secure=False,
             samesite='Lax'
         )
-
         response.set_cookie(
                     key='refresh_token',
                     value=refresh,
@@ -45,7 +44,6 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                     secure=False,
                     samesite='Lax'
                 )
-
         response.data = {'detail': 'Login successfully!', 'user': user}
         return response
 
@@ -59,7 +57,6 @@ class CookieTokenRefreshView(TokenRefreshView):
                 {'detail': 'Refresh token not found!'},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
         serializer = self.get_serializer(data={'refresh':refresh_token})
 
         try:
@@ -71,7 +68,6 @@ class CookieTokenRefreshView(TokenRefreshView):
             )
 
         access_token = serializer.validated_data.get('access')
-
         response = Response({'detail': 'Token refreshed'})
         response.set_cookie(
                     key='access_token',
@@ -80,7 +76,6 @@ class CookieTokenRefreshView(TokenRefreshView):
                     secure=False,
                     samesite='Lax'
                 )
-
         return response
 
 
@@ -101,10 +96,7 @@ class LogoutView(APIView):
                 {'detail': 'User is already logged out!'},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
         
-        
-
         response = Response(
                         {'detail': 'Log-Out successfully! '
                         'All Tokens will be deleted. '
