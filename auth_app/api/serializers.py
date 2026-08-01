@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -17,7 +18,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
             }
         }
 
-
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError('Email already exists')
@@ -31,24 +31,19 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def save(self):
         pw = self.validated_data['password']
-
         account = User(email=self.validated_data['email'], username=self.validated_data['username'])
         account.set_password(pw)
         account.save()
         return account
 
 
-# class LoginSerializer(serializers.Serializer):
+class CookieTokenObtainPairSerializer(TokenObtainPairSerializer):
 
-#     username = serializers.CharField()
-#     password = serializers.CharField(write_only=True)
-
-#     def validate(self, data):
-        
-#         user = authenticate(
-#             username=data['email'],
-#             password=data['password'])
-#         if not user:
-#             raise serializers.ValidationError('Invalid credentials')
-#         data['user'] = user
-#         return data  
+    def validate(self, attrs):
+        data = super().validate(attrs)         
+        data["user"] = {                        
+            "id": self.user.id,
+            "username": self.user.username,
+            "email": self.user.email,
+        }
+        return data

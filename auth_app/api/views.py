@@ -1,9 +1,11 @@
+from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .serializers import RegistrationSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .serializers import CookieTokenObtainPairSerializer
 
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -24,10 +26,13 @@ class RegistrationView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CookieTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CookieTokenObtainPairSerializer
+
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         refresh = response.data.get('refresh')
         access = response.data.get('access')
+        user = response.data.get('user')
 
         response.set_cookie(
             key='access_token',
@@ -45,7 +50,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                     samesite='Lax'
                 )
 
-        response.data = {'message': 'Login succeeded'}
+        response.data = {'detail': 'Login successfully!', 'user': user}
         return response
 
 
@@ -71,7 +76,7 @@ class CookieTokenRefreshView(TokenRefreshView):
 
         access_token = serializer.validated_data.get('access')
 
-        response = Response({'message': 'access Token refreshed'})
+        response = Response({'detail': 'Token refreshed'})
         response.set_cookie(
                     key='access_token',
                     value=access_token,
