@@ -13,15 +13,9 @@ class RegistrationView(APIView):
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
 
-        data = {}
         if serializer.is_valid():
-            saved_account = serializer.save()
-            data = {
-                'username': saved_account.username,
-                'email': saved_account.email,
-                'user_id': saved_account.pk
-            }
-            return Response(data)
+            serializer.save()
+            return Response({'detail': 'User created successfully!'}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -61,7 +55,7 @@ class CookieTokenRefreshView(TokenRefreshView):
         if refresh_token is None:
             return Response(
                 {'detail': 'Refresh token not found!'},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         serializer = self.get_serializer(data={'refresh':refresh_token})
