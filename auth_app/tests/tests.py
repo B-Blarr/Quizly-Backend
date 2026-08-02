@@ -73,7 +73,62 @@ class LoginTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
 
 
+class LogoutTests(APITestCase):
 
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='loginuser', password='SuperSecret123!', email='test@test.de')
+        self.client.post(
+            reverse('login'),
+            {'username': 'loginuser', 'password': 'SuperSecret123!'},
+            format='json',
+        )
+
+    def test_logout(self):
+        url = reverse('logout')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.cookies['access_token'].value, '')
+        self.assertEqual(response.cookies['refresh_token'].value, '')
+        self.assertIn('detail', response.data)
+
+    def test_logout_without_login_returns_401(self):
+        client = APIClient()          
+        response = client.post(reverse('logout'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
+
+    def test_user_already_logged_out_returns_401(self):
+        access = self.client.cookies['access_token'].value
+        refresh = self.client.cookies['refresh_token'].value
+        self.client.post(reverse('logout'))              
+        self.client.cookies['access_token'] = access    
+        self.client.cookies['refresh_token'] = refresh
+        response = self.client.post(reverse('logout'))   
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
+
+
+class TokenRefreshTests(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='loginuser', password='SuperSecret123!', email='test@test.de')
+        self.client.post(
+            reverse('login'),
+            {'username': 'loginuser', 'password': 'SuperSecret123!'},
+            format='json',
+        )
+
+    def test_token_refresh(self):
+        url = reverse('token_refresh')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.data['detail'], 'Token refreshed')
+        self.assertIn('access_token', response.cookies)
+
+    def test_token_refresh_without_login_returns_401(self):
+        client = APIClient()          
+        response = client.post(reverse('token_refresh'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
 
 
 
