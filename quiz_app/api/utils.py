@@ -31,7 +31,7 @@ def download_audio(url):
 
 def transcribe_audio(audio_path):
     """Transcribe an audio file and return the plain text."""
-    model=settings.WHISPER_MODEL,
+    model=whisper.load_model(settings.WHISPER_MODEL)
     result = model.transcribe(audio_path)
     return result["text"]
 

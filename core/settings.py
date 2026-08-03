@@ -23,7 +23,7 @@ MEDIA_TEMP_DIR = BASE_DIR / 'tmp'
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 WHISPER_MODEL = "tiny"
 
 SECRET_KEY = os.getenv("SECRET_KEY")
