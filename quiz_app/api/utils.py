@@ -8,8 +8,6 @@ from google.genai import types
 from django.conf import settings
 
 
-tmp_filename = 'download.%(ext)s'
-
 def download_audio(url):
     os.makedirs(settings.MEDIA_TEMP_DIR, exist_ok=True)
     outtmpl = str(settings.MEDIA_TEMP_DIR / 'download.%(ext)s')
@@ -61,7 +59,7 @@ QUIZ_SCHEMA = {
     "required": ["title", "description", "questions"],
 }
 
-prompt = """Based on the following transcript, generate a quiz in valid JSON format.
+PROMPT = """Based on the following transcript, generate a quiz in valid JSON format.
 
 The quiz must follow this exact structure:
 
@@ -93,6 +91,8 @@ The quiz must follow this exact structure:
 
 Requirements:
 
+- Every question and answer has to be in German.
+
 - Each question must have exactly 4 distinct answer options.
 
 - Only one correct answer is allowed per question, and it must be present in 'question_options'.
@@ -106,7 +106,7 @@ def generate_quiz_data(transcript):
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=f"{prompt}\n\n{transcript}",
+        contents=f"{PROMPT}\n\n{transcript}",
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=QUIZ_SCHEMA,
