@@ -28,8 +28,6 @@ if not SECRET_KEY:
     raise ValueError("SECRET_KEY is not set in the environment variables.")
 
 
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
