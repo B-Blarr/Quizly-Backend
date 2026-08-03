@@ -14,7 +14,9 @@ class QuizViewSet(viewsets.ModelViewSet):
     permission_classes = [IsOwner, IsAuthenticated]
 
     def get_queryset(self):
-        return Quiz.objects.filter(user=self.request.user)
+        if self.action == 'list':
+            return Quiz.objects.filter(user=self.request.user)
+        return Quiz.objects.all()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
