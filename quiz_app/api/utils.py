@@ -31,7 +31,7 @@ def download_audio(url):
 
 def transcribe_audio(audio_path):
     """Transcribe an audio file and return the plain text."""
-    model = whisper.load_model("tiny")
+    model=settings.WHISPER_MODEL,
     result = model.transcribe(audio_path)
     return result["text"]
 
@@ -105,7 +105,7 @@ Requirements:
 def generate_quiz_data(transcript):
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model=settings.GEMINI_MODEL,
         contents=f"{PROMPT}\n\n{transcript}",
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
