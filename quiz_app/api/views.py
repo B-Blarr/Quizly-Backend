@@ -1,11 +1,12 @@
 from django.shortcuts import render
-from rest_framework import viewsets
-from rest_framework.generics import CreateAPIView
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from quiz_app.models import Quiz
-from .serializers import QuizSerializer
+from .serializers import QuizSerializer, QuizCreateSerializer
 from .permissions import IsOwner
+from .utils import create_quiz_from_url
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -18,8 +19,9 @@ class QuizViewSet(viewsets.ModelViewSet):
             return Quiz.objects.filter(user=self.request.user)
         return Quiz.objects.all()
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = QuizCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        quiz = create_quiz_from_url(serializer.validated_data["url"], request.user)
+        return Response(QuizSerializer(quiz).data, status=status.HTTP_201_CREATED)
 
-class QuizCreateView(CreateAPIView):
-    pass
