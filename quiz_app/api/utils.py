@@ -8,6 +8,12 @@ from google.genai import types
 from django.conf import settings
 
 from quiz_app.models import Quiz, Question
+from yt_dlp.utils import YoutubeDLError
+
+
+class QuizGenerationError(Exception):
+    """Raised when a quiz cannot be created from the given URL."""
+    pass
 
 
 def download_audio(url):
@@ -24,10 +30,12 @@ def download_audio(url):
         "preferredcodec": "mp3",
         }],
     }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        audio_path = ydl.prepare_filename(info)    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            audio_path = ydl.prepare_filename(info) 
+    except YoutubeDLError as exc:
+        raise QuizGenerationError("The video could not be downloaded.") from exc
     audio_path = os.path.splitext(audio_path)[0] + '.mp3'
     return audio_path, info["id"]
 
@@ -145,3 +153,5 @@ def save_quiz(data, url, user):
         for q in data["questions"]
     ])
     return quiz
+
+
