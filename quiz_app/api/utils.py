@@ -113,3 +113,18 @@ def generate_quiz_data(transcript):
         ),
     )
     return json.loads(response.text)
+
+def create_quiz_from_url(url, user):
+
+    audio_path = download_audio(url)
+    try:
+        transcript = transcribe_audio(audio_path)
+    finally:
+        os.remove(audio_path)
+    data = generate_quiz_data(transcript)
+    return save_quiz(data, url, user)
+
+
+
+def save_quiz(data, url, user):
+    """Store the generated quiz and its questions."""

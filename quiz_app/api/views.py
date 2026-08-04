@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from rest_framework import viewsets
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from quiz_app.models import Quiz, Question
-from .serializers import QuestionSerializer, QuizSerializer
+from quiz_app.models import Quiz
+from .serializers import QuizSerializer
 from .permissions import IsOwner
 
 
@@ -19,3 +20,6 @@ class QuizViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+class QuizCreateView(CreateAPIView):
+    pass
