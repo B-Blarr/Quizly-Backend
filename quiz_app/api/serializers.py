@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from quiz_app.models import Quiz, Question
+from urllib.parse import urlparse
+
+YOUTUBE_HOSTS = ('youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be')
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -21,6 +24,20 @@ class QuizSerializer(serializers.ModelSerializer):
 
         read_only_fields = ['video_url']
 
+
+class QuizCreateSerializer(serializers.Serializer):
+
+    url = serializers.URLField()
+    
+    def validate_url(self, value):
+        
+        if urlparse(value).hostname not in YOUTUBE_HOSTS:
+            raise serializers.ValidationError('Only YouTube URLs are allowed.')
+        return value
+
+
+
+    
 
 
 
