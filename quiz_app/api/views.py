@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from quiz_app.models import Quiz
 from .serializers import QuizSerializer, QuizCreateSerializer
 from .permissions import IsOwner
-from .utils import create_quiz_from_url
+from .utils import create_quiz_from_url, QuizGenerationError
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -22,6 +22,10 @@ class QuizViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = QuizCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        quiz = create_quiz_from_url(serializer.validated_data["url"], request.user)
+
+        try:
+            quiz = create_quiz_from_url(serializer.validated_data["url"], request.user)
+        except QuizGenerationError as exc:    
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(QuizSerializer(quiz).data, status=status.HTTP_201_CREATED)
 
