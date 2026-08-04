@@ -7,6 +7,8 @@ from google import genai
 from google.genai import types
 from django.conf import settings
 
+from quiz_app.models import Quiz, Question
+
 
 def download_audio(url):
     os.makedirs(settings.MEDIA_TEMP_DIR, exist_ok=True)
@@ -124,7 +126,21 @@ def create_quiz_from_url(url, user):
     data = generate_quiz_data(transcript)
     return save_quiz(data, url, user)
 
-
-
 def save_quiz(data, url, user):
     """Store the generated quiz and its questions."""
+    quiz = Quiz.objects.create(
+        user=user,
+        title=data["title"],
+        description=data["description"],
+        video_url=url,
+    )
+    Question.objects.bulk_create([
+        Question(
+            quiz=quiz,
+            question_title=q["question_title"],
+            question_options=q["question_options"],
+            answer=q["answer"],
+        )
+        for q in data["questions"]
+    ])
+    return quiz
