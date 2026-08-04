@@ -29,7 +29,7 @@ def download_audio(url):
         info = ydl.extract_info(url, download=True)
         audio_path = ydl.prepare_filename(info)    
     audio_path = os.path.splitext(audio_path)[0] + '.mp3'
-    return audio_path
+    return audio_path, info["id"]
 
 def transcribe_audio(audio_path):
     """Transcribe an audio file and return the plain text."""
@@ -118,13 +118,14 @@ def generate_quiz_data(transcript):
 
 def create_quiz_from_url(url, user):
 
-    audio_path = download_audio(url)
+    audio_path, video_id  = download_audio(url)
     try:
         transcript = transcribe_audio(audio_path)
     finally:
         os.remove(audio_path)
     data = generate_quiz_data(transcript)
-    return save_quiz(data, url, user)
+    video_url = f"https://www.youtube.com/watch?v={video_id}"
+    return save_quiz(data, video_url, user)
 
 def save_quiz(data, url, user):
     """Store the generated quiz and its questions."""
