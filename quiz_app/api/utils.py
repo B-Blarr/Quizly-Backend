@@ -1,14 +1,14 @@
-import os
 import json
-import yt_dlp
-import whisper
+import os
 
+import whisper
+import yt_dlp
+from django.conf import settings
 from google import genai
 from google.genai import types
-from django.conf import settings
-
-from quiz_app.models import Quiz, Question
 from yt_dlp.utils import YoutubeDLError
+
+from quiz_app.models import Question, Quiz
 
 
 class QuizGenerationError(Exception):

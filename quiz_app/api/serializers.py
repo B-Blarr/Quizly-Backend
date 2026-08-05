@@ -1,6 +1,8 @@
-from rest_framework import serializers
-from quiz_app.models import Quiz, Question
 from urllib.parse import urlparse
+
+from rest_framework import serializers
+
+from quiz_app.models import Question, Quiz
 
 YOUTUBE_HOSTS = ('youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be')
 

@@ -1,13 +1,19 @@
-from django.urls import reverse
-from django.contrib.auth import get_user_model
-from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
-
-from quiz_app.api.utils import QuizGenerationError
-from quiz_app.models import Quiz, Question
 from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 from yt_dlp.utils import YoutubeDLError
-from quiz_app.api.utils import save_quiz, create_quiz_from_url, download_audio,transcribe_audio
+
+from quiz_app.api.utils import (
+    QuizGenerationError,
+    create_quiz_from_url,
+    download_audio,
+    save_quiz,
+    transcribe_audio,
+)
+from quiz_app.models import Question, Quiz
 
 
 

@@ -1,12 +1,12 @@
-from django.shortcuts import render
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from quiz_app.models import Quiz
-from .serializers import QuizSerializer, QuizCreateSerializer
+
 from .permissions import IsOwner
-from .utils import create_quiz_from_url, QuizGenerationError
+from .serializers import QuizCreateSerializer, QuizSerializer
+from .utils import QuizGenerationError, create_quiz_from_url
 
 
 class QuizViewSet(viewsets.ModelViewSet):
