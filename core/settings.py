@@ -23,6 +23,10 @@ MEDIA_TEMP_DIR = BASE_DIR / 'tmp'
 
 load_dotenv()
 
+def env_list(name, default=""):
+    """Read a comma separated list from the environment."""
+    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-3.6-flash"
 WHISPER_MODEL = "tiny"
@@ -72,10 +76,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-]
+CORS_ALLOWED_ORIGINS = env_list(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5500,http://127.0.0.1:5500",
+)
 
 CORS_ALLOW_CREDENTIALS = True
 
