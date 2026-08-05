@@ -6,6 +6,7 @@ from rest_framework.test import APITestCase, APIClient
 from quiz_app.api.utils import QuizGenerationError
 from quiz_app.models import Quiz, Question
 from unittest.mock import patch
+from quiz_app.api.utils import save_quiz
 
 
 
@@ -89,3 +90,19 @@ class QuizTests(APITestCase):
             reverse('quiz-list'), {'url': 'https://video.com/123456'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_save_quiz_creates_quiz_with_questions(self):
+        data = {
+            "title": "Generated Quiz",
+            "description": "Eine Beschreibung",
+            "questions": [
+                {"question_title": "Frage 1",
+                 "question_options": ["A", "B", "C", "D"], "answer": "A"},
+                {"question_title": "Frage 2",
+                 "question_options": ["A", "B", "C", "D"], "answer": "B"},
+            ],
+        }
+        quiz = save_quiz(data, "https://www.youtube.com/watch?v=abc", self.user)
+        self.assertEqual(quiz.title, "Generated Quiz")
+        self.assertEqual(quiz.user, self.user)
+        self.assertEqual(quiz.questions.count(), 2)
+        self.assertEqual(quiz.questions.first().question_options, ["A", "B", "C", "D"])
