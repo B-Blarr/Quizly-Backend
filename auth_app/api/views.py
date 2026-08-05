@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .serializers import CookieTokenObtainPairSerializer, RegistrationSerializer
+from .utils import set_auth_cookie
 
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -25,24 +26,9 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-        refresh = response.data.get('refresh')
-        access = response.data.get('access')
         user = response.data.get('user')
-
-        response.set_cookie(
-            key='access_token',
-            value=access,
-            httponly=True,
-            secure=False,
-            samesite='Lax'
-        )
-        response.set_cookie(
-                    key='refresh_token',
-                    value=refresh,
-                    httponly=True,
-                    secure=False,
-                    samesite='Lax'
-                )
+        set_auth_cookie(response, 'access_token', response.data.get('access'))
+        set_auth_cookie(response, 'refresh_token', response.data.get('refresh'))
         response.data = {'detail': 'Login successfully!', 'user': user}
         return response
 
@@ -65,17 +51,10 @@ class CookieTokenRefreshView(TokenRefreshView):
                 {'detail': 'Refresh token invalid!'},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
-        access_token = serializer.validated_data.get('access')
         response = Response({'detail': 'Token refreshed'})
-        response.set_cookie(
-                    key='access_token',
-                    value=access_token,
-                    httponly=True,
-                    secure=False,
-                    samesite='Lax'
-                )
+        set_auth_cookie(response, 'access_token', serializer.validated_data.get('access'))
         return response
+
 
 
 class LogoutView(APIView):
