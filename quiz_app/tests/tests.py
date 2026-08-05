@@ -65,3 +65,13 @@ class QuizTests(APITestCase):
         self.assertEqual(Question.objects.count(), 0)
 
     
+    @patch('quiz_app.api.views.create_quiz_from_url')
+    def test_create_quiz(self, mock_create):
+        mock_create.return_value = self.quiz
+        url = 'https://www.youtube.com/watch?v=abc123'
+
+        response = self.client.post(
+            reverse('quiz-list'), {'url': url}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        mock_create.assert_called_once_with(url, self.user)
