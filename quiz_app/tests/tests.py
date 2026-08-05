@@ -1,9 +1,12 @@
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 
+from quiz_app.api.utils import QuizGenerationError
 from quiz_app.models import Quiz, Question
+from unittest.mock import patch
+
 
 
 User = get_user_model()
@@ -40,4 +43,25 @@ class QuizTests(APITestCase):
             description="A new Test Quiz",
             video_url="https://www.youtube.com/watch?v=secondtest",
         )
+    
+    def test_get_quiz_list(self):
+        url = reverse('quiz-list')
+        response = self.client.get(url)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_quiz_list_not_authenticated_returns_401(self):
+        client = APIClient()
+        response = client.get(reverse('quiz-list'))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_quiz_of_other_user_returns_403(self):
+        response = self.client.get(reverse('quiz-detail', args=[self.second_quiz.id]))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_quiz(self):
+        response = self.client.delete(reverse('quiz-detail', args=[self.quiz.id]))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Question.objects.count(), 0)
+
     
