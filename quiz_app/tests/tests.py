@@ -83,3 +83,9 @@ class QuizTests(APITestCase):
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_quiz_with_non_youtube_url_returns_400(self):
+        response = self.client.post(
+            reverse('quiz-list'), {'url': 'https://video.com/123456'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
