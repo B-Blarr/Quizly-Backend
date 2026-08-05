@@ -7,7 +7,7 @@ from quiz_app.api.utils import QuizGenerationError
 from quiz_app.models import Quiz, Question
 from unittest.mock import patch
 from yt_dlp.utils import YoutubeDLError
-from quiz_app.api.utils import save_quiz, create_quiz_from_url, download_audio
+from quiz_app.api.utils import save_quiz, create_quiz_from_url, download_audio,transcribe_audio
 
 
 
@@ -130,3 +130,9 @@ class QuizTests(APITestCase):
         mock_ydl.side_effect = YoutubeDLError('error')
         with self.assertRaises(QuizGenerationError):
             download_audio('https://www.youtube.com/watch?v=abc')
+
+    @patch('quiz_app.api.utils.whisper.load_model')
+    def test_transcribe_audio_returns_text(self, mock_load):
+        mock_load.return_value.transcribe.return_value = {"text": "Ein Transkript"}
+        result = transcribe_audio('tmp/download.mp3')
+        self.assertEqual(result, "Ein Transkript")
