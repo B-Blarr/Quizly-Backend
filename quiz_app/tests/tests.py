@@ -6,7 +6,8 @@ from rest_framework.test import APITestCase, APIClient
 from quiz_app.api.utils import QuizGenerationError
 from quiz_app.models import Quiz, Question
 from unittest.mock import patch
-from quiz_app.api.utils import save_quiz
+from yt_dlp.utils import YoutubeDLError
+from quiz_app.api.utils import save_quiz, create_quiz_from_url, download_audio
 
 
 
@@ -106,3 +107,26 @@ class QuizTests(APITestCase):
         self.assertEqual(quiz.user, self.user)
         self.assertEqual(quiz.questions.count(), 2)
         self.assertEqual(quiz.questions.first().question_options, ["A", "B", "C", "D"])
+
+    @patch('quiz_app.api.utils.os.remove')
+    @patch('quiz_app.api.utils.generate_quiz_data')
+    @patch('quiz_app.api.utils.transcribe_audio')
+    @patch('quiz_app.api.utils.download_audio')
+    def test_create_quiz_from_url_normalizes_video_url(
+            self, mock_download, mock_transcribe, mock_generate, mock_remove):
+        mock_download.return_value = ('tmp/download.mp3', 'FMrQYWGbm7M')
+        mock_transcribe.return_value = 'Ein Transkript'
+        mock_generate.return_value = {
+            "title": "T", "description": "D",
+            "questions": [{"question_title": "F",
+                           "question_options": ["A", "B", "C", "D"], "answer": "A"}],
+        }
+        quiz = create_quiz_from_url('https://www.youtube.com/shorts/FMrQYWGbm7M', self.user)
+        self.assertEqual(quiz.video_url, 'https://www.youtube.com/watch?v=FMrQYWGbm7M')
+        mock_remove.assert_called_once_with('tmp/download.mp3')
+
+    @patch('quiz_app.api.utils.yt_dlp.YoutubeDL')
+    def test_download_audio_raises_quiz_generation_error(self, mock_ydl):
+        mock_ydl.side_effect = YoutubeDLError('error')
+        with self.assertRaises(QuizGenerationError):
+            download_audio('https://www.youtube.com/watch?v=abc')
