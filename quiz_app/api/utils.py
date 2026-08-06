@@ -131,6 +131,13 @@ def generate_quiz_data(transcript):
     return json.loads(response.text)
 
 
+def validate_quiz_data(data):
+    """Raise if the generated quiz does not match the expected format."""
+    for question in data["questions"]:
+        if question["answer"] not in question["question_options"]:
+            raise QuizGenerationError("The generated quiz is invalid.")
+
+
 def create_quiz_from_url(url, user):
 
     audio_path, video_id  = download_audio(url)
@@ -140,6 +147,7 @@ def create_quiz_from_url(url, user):
         os.remove(audio_path)
     data = generate_quiz_data(transcript)
     video_url = f"https://www.youtube.com/watch?v={video_id}"
+    validate_quiz_data(data)
     return save_quiz(data, video_url, user)
 
 
