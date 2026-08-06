@@ -4,13 +4,15 @@ from rest_framework.response import Response
 
 
 def set_auth_cookie(response, key, token):
+    """Attach a JWT as an HttpOnly cookie to the given response."""
     response.set_cookie(
         key=key,
         value=token,
         httponly=True,
         secure=not settings.DEBUG,
-        samesite='Lax'
+        samesite='Lax',
     )
+
 
 def unauthorized(detail):
     """Return a 401 response with the given detail message."""

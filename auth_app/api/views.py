@@ -16,15 +16,18 @@ LOGOUT_MESSAGE = (
 
 
 class RegistrationView(APIView):
+    """Register a new user account."""
+
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Create a user or return the validation errors."""
         serializer = RegistrationSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {'detail': 'User created successfully!'}, 
+                {'detail': 'User created successfully!'},
                 status=status.HTTP_201_CREATED)
         else:
             return Response(
@@ -32,9 +35,12 @@ class RegistrationView(APIView):
 
 
 class CookieTokenObtainPairView(TokenObtainPairView):
+    """Log a user in and store both tokens as HttpOnly cookies."""
+
     serializer_class = CookieTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        """Return the user's data and set the auth cookies."""
         response = super().post(request, *args, **kwargs)
         user = response.data.get('user')
         set_auth_cookie(response, 'access_token', response.data.get('access'))
@@ -44,9 +50,11 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
 
 class CookieTokenRefreshView(TokenRefreshView):
-    def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get('refresh_token')
+    """Issue a new access token based on the refresh token cookie."""
 
+    def post(self, request, *args, **kwargs):
+        """Refresh the access token cookie or return 401."""
+        refresh_token = request.COOKIES.get('refresh_token')
         if refresh_token is None:
             return unauthorized('Refresh token not found!')
         serializer = self.get_serializer(data={'refresh': refresh_token})
@@ -61,16 +69,19 @@ class CookieTokenRefreshView(TokenRefreshView):
 
 
 class LogoutView(APIView):
+    """Log a user out, blacklist the refresh token and clear the cookies."""
+
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get('refresh_token')      
+        """Blacklist the refresh token and delete both auth cookies."""
+        refresh_token = request.COOKIES.get('refresh_token')
         if refresh_token is None:
-            return unauthorized('Refresh token not found!')     
+            return unauthorized('Refresh token not found!')
         try:
             RefreshToken(refresh_token).blacklist()
         except TokenError:
-            return unauthorized('User is already logged out!')          
+            return unauthorized('User is already logged out!')
         response = Response(
             {'detail': LOGOUT_MESSAGE}, status=status.HTTP_200_OK)
-        response.delete_cookie("access_token")
-        response.delete_cookie("refresh_token")
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
         return response

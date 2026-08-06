@@ -23,9 +23,12 @@ MEDIA_TEMP_DIR = BASE_DIR / 'tmp'
 
 load_dotenv()
 
+
 def env_list(name, default=""):
     """Read a comma separated list from the environment."""
-    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+    raw = os.getenv(name, default)
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-3.6-flash"
@@ -39,8 +42,6 @@ if not SECRET_KEY:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m21t0fe7vk%@1_&s&sb+2=7&0m#@ihil%h3j3v07qa-&a3t*nm'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -155,7 +156,7 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=100),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
 # Static files (CSS, JavaScript, Images)

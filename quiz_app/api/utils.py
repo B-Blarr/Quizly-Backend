@@ -10,47 +10,6 @@ from yt_dlp.utils import YoutubeDLError
 
 from quiz_app.models import Question, Quiz
 
-
-class QuizGenerationError(Exception):
-    """Raised when a quiz cannot be created from the given URL."""
-    pass
-
-
-def build_ydl_options(outtmpl):
-    return {
-        "format": "bestaudio/best",
-        "outtmpl": outtmpl,
-        "quiet": True,
-        "noplaylist": True,
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-        }],
-    }
-
-
-def download_audio(url):
-    os.makedirs(settings.MEDIA_TEMP_DIR, exist_ok=True)
-    outtmpl = str(settings.MEDIA_TEMP_DIR / 'download.%(ext)s')
-    ydl_opts = build_ydl_options(outtmpl)
-
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            audio_path = ydl.prepare_filename(info)
-    except YoutubeDLError as exc:
-        raise QuizGenerationError("The video could not be downloaded.") from exc
-    audio_path = os.path.splitext(audio_path)[0] + '.mp3'
-    return audio_path, info["id"]
-
-
-def transcribe_audio(audio_path):
-    """Transcribe an audio file and return the plain text."""
-    model=whisper.load_model(settings.WHISPER_MODEL)
-    result = model.transcribe(audio_path)
-    return result["text"]
-
-
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 QUIZ_SCHEMA = {
@@ -64,7 +23,10 @@ QUIZ_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "question_title": {"type": "string"},
-                    "question_options": {"type": "array", "items": {"type": "string"}},
+                    "question_options": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
                     "answer": {"type": "string"},
                 },
                 "required": ["question_title", "question_options", "answer"],
@@ -118,8 +80,51 @@ Requirements:
 """
 
 
-def generate_quiz_data(transcript):
+class QuizGenerationError(Exception):
+    """Raised when a quiz cannot be created from the given URL."""
 
+    pass
+
+
+def build_ydl_options(outtmpl):
+    """Build the yt_dlp options for extracting audio as mp3."""
+    return {
+        "format": "bestaudio/best",
+        "outtmpl": outtmpl,
+        "quiet": True,
+        "noplaylist": True,
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+        }],
+    }
+
+
+def download_audio(url):
+    """Download a video's audio track and return its path and video id."""
+    os.makedirs(settings.MEDIA_TEMP_DIR, exist_ok=True)
+    outtmpl = str(settings.MEDIA_TEMP_DIR / 'download.%(ext)s')
+    ydl_opts = build_ydl_options(outtmpl)
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            audio_path = ydl.prepare_filename(info)
+    except YoutubeDLError as exc:
+        raise QuizGenerationError("The video could not be downloaded.") from exc
+    audio_path = os.path.splitext(audio_path)[0] + '.mp3'
+    return audio_path, info["id"]
+
+
+def transcribe_audio(audio_path):
+    """Transcribe an audio file and return the plain text."""
+    model = whisper.load_model(settings.WHISPER_MODEL)
+    result = model.transcribe(audio_path)
+    return result["text"]
+
+
+def generate_quiz_data(transcript):
+    """Ask Gemini to build a quiz from the transcript and return it."""
     response = client.models.generate_content(
         model=settings.GEMINI_MODEL,
         contents=f"{PROMPT}\n\n{transcript}",
@@ -139,8 +144,8 @@ def validate_quiz_data(data):
 
 
 def create_quiz_from_url(url, user):
-
-    audio_path, video_id  = download_audio(url)
+    """Run the full pipeline and store the resulting quiz."""
+    audio_path, video_id = download_audio(url)
     try:
         transcript = transcribe_audio(audio_path)
     finally:
@@ -152,6 +157,7 @@ def create_quiz_from_url(url, user):
 
 
 def build_questions(quiz, questions_data):
+    """Create unsaved Question objects for the given quiz."""
     return [
         Question(
             quiz=quiz,
@@ -173,5 +179,3 @@ def save_quiz(data, url, user):
     )
     Question.objects.bulk_create(build_questions(quiz, data["questions"]))
     return quiz
-
-
