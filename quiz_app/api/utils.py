@@ -16,28 +16,33 @@ class QuizGenerationError(Exception):
     pass
 
 
-def download_audio(url):
-    os.makedirs(settings.MEDIA_TEMP_DIR, exist_ok=True)
-    outtmpl = str(settings.MEDIA_TEMP_DIR / 'download.%(ext)s')
-
-    ydl_opts = {
+def build_ydl_options(outtmpl):
+    return {
         "format": "bestaudio/best",
         "outtmpl": outtmpl,
         "quiet": True,
         "noplaylist": True,
         "postprocessors": [{
-        "key": "FFmpegExtractAudio",
-        "preferredcodec": "mp3",
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
         }],
     }
+
+
+def download_audio(url):
+    os.makedirs(settings.MEDIA_TEMP_DIR, exist_ok=True)
+    outtmpl = str(settings.MEDIA_TEMP_DIR / 'download.%(ext)s')
+    ydl_opts = build_ydl_options(outtmpl)
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            audio_path = ydl.prepare_filename(info) 
+            audio_path = ydl.prepare_filename(info)
     except YoutubeDLError as exc:
         raise QuizGenerationError("The video could not be downloaded.") from exc
     audio_path = os.path.splitext(audio_path)[0] + '.mp3'
     return audio_path, info["id"]
+
 
 def transcribe_audio(audio_path):
     """Transcribe an audio file and return the plain text."""
@@ -112,6 +117,7 @@ Requirements:
 - Do not include explanations, comments, or any text outside the JSON.
 """
 
+
 def generate_quiz_data(transcript):
 
     response = client.models.generate_content(
@@ -124,6 +130,7 @@ def generate_quiz_data(transcript):
     )
     return json.loads(response.text)
 
+
 def create_quiz_from_url(url, user):
 
     audio_path, video_id  = download_audio(url)
@@ -135,6 +142,19 @@ def create_quiz_from_url(url, user):
     video_url = f"https://www.youtube.com/watch?v={video_id}"
     return save_quiz(data, video_url, user)
 
+
+def build_questions(quiz, questions_data):
+    return [
+        Question(
+            quiz=quiz,
+            question_title=q["question_title"],
+            question_options=q["question_options"],
+            answer=q["answer"],
+        )
+        for q in questions_data
+    ]
+
+
 def save_quiz(data, url, user):
     """Store the generated quiz and its questions."""
     quiz = Quiz.objects.create(
@@ -143,15 +163,7 @@ def save_quiz(data, url, user):
         description=data["description"],
         video_url=url,
     )
-    Question.objects.bulk_create([
-        Question(
-            quiz=quiz,
-            question_title=q["question_title"],
-            question_options=q["question_options"],
-            answer=q["answer"],
-        )
-        for q in data["questions"]
-    ])
+    Question.objects.bulk_create(build_questions(quiz, data["questions"]))
     return quiz
 
 

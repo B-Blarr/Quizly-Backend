@@ -23,9 +23,13 @@ class RegistrationView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response({'detail': 'User created successfully!'}, status=status.HTTP_201_CREATED)
+            return Response(
+                {'detail': 'User created successfully!'}, 
+                status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = CookieTokenObtainPairSerializer
@@ -45,13 +49,14 @@ class CookieTokenRefreshView(TokenRefreshView):
 
         if refresh_token is None:
             return unauthorized('Refresh token not found!')
-        serializer = self.get_serializer(data={'refresh':refresh_token})
+        serializer = self.get_serializer(data={'refresh': refresh_token})
         try:
             serializer.is_valid(raise_exception=True)
         except TokenError:
             return unauthorized('Refresh token invalid!')
         response = Response({'detail': 'Token refreshed'})
-        set_auth_cookie(response, 'access_token', serializer.validated_data.get('access'))
+        set_auth_cookie(
+            response, 'access_token', serializer.validated_data.get('access'))
         return response
 
 
@@ -65,7 +70,7 @@ class LogoutView(APIView):
         except TokenError:
             return unauthorized('User is already logged out!')          
         response = Response(
-                        {'detail': LOGOUT_MESSAGE},status=status.HTTP_200_OK)
+            {'detail': LOGOUT_MESSAGE}, status=status.HTTP_200_OK)
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response
