@@ -7,7 +7,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .serializers import CookieTokenObtainPairSerializer, RegistrationSerializer
-from .utils import set_auth_cookie
+from .utils import set_auth_cookie, unauthorized
+
+LOGOUT_MESSAGE = (
+    'Log-Out successfully! All Tokens will be deleted. '
+    'Refresh token is now invalid.'
+)
+
 
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -38,49 +44,28 @@ class CookieTokenRefreshView(TokenRefreshView):
         refresh_token = request.COOKIES.get('refresh_token')
 
         if refresh_token is None:
-            return Response(
-                {'detail': 'Refresh token not found!'},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            return unauthorized('Refresh token not found!')
         serializer = self.get_serializer(data={'refresh':refresh_token})
-
         try:
             serializer.is_valid(raise_exception=True)
         except TokenError:
-            return Response(
-                {'detail': 'Refresh token invalid!'},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            return unauthorized('Refresh token invalid!')
         response = Response({'detail': 'Token refreshed'})
         set_auth_cookie(response, 'access_token', serializer.validated_data.get('access'))
         return response
 
 
-
 class LogoutView(APIView):
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get('refresh_token')
-
+        refresh_token = request.COOKIES.get('refresh_token')      
         if refresh_token is None:
-            return Response(
-                {'detail': 'Refresh token not found!'},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-        
+            return unauthorized('Refresh token not found!')     
         try:
             RefreshToken(refresh_token).blacklist()
         except TokenError:
-            return Response(
-                {'detail': 'User is already logged out!'},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-        
+            return unauthorized('User is already logged out!')          
         response = Response(
-                        {'detail': 'Log-Out successfully! '
-                        'All Tokens will be deleted. '
-                        'Refresh token is now invalid.'},
-                        status=status.HTTP_200_OK,
-                    )
+                        {'detail': LOGOUT_MESSAGE},status=status.HTTP_200_OK)
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response

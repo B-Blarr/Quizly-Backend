@@ -1,4 +1,6 @@
 from django.conf import settings
+from rest_framework import status
+from rest_framework.response import Response
 
 
 def set_auth_cookie(response, key, token):
@@ -9,3 +11,7 @@ def set_auth_cookie(response, key, token):
         secure=not settings.DEBUG,
         samesite='Lax'
     )
+
+def unauthorized(detail):
+    """Return a 401 response with the given detail message."""
+    return Response({'detail': detail}, status=status.HTTP_401_UNAUTHORIZED)
