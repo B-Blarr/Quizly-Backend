@@ -105,13 +105,13 @@ def download_audio(url):
     os.makedirs(settings.MEDIA_TEMP_DIR, exist_ok=True)
     outtmpl = str(settings.MEDIA_TEMP_DIR / 'download.%(ext)s')
     ydl_opts = build_ydl_options(outtmpl)
-
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             audio_path = ydl.prepare_filename(info)
     except YoutubeDLError as exc:
-        raise QuizGenerationError("The video could not be downloaded.") from exc
+        raise QuizGenerationError(
+            "The video could not be downloaded.") from exc
     audio_path = os.path.splitext(audio_path)[0] + '.mp3'
     return audio_path, info["id"]
 

@@ -4,9 +4,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
-from .serializers import CookieTokenObtainPairSerializer, RegistrationSerializer
+from .serializers import (
+    CookieTokenObtainPairSerializer,
+    RegistrationSerializer,
+)
 from .utils import set_auth_cookie, unauthorized
 
 LOGOUT_MESSAGE = (
@@ -43,8 +49,10 @@ class CookieTokenObtainPairView(TokenObtainPairView):
         """Return the user's data and set the auth cookies."""
         response = super().post(request, *args, **kwargs)
         user = response.data.get('user')
-        set_auth_cookie(response, 'access_token', response.data.get('access'))
-        set_auth_cookie(response, 'refresh_token', response.data.get('refresh'))
+        set_auth_cookie(
+            response, 'access_token', response.data.get('access'))
+        set_auth_cookie(
+            response, 'refresh_token', response.data.get('refresh'))
         response.data = {'detail': 'Login successfully!', 'user': user}
         return response
 

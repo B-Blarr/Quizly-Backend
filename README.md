@@ -7,7 +7,9 @@ transcript, built with Django and the Django REST Framework.
 
 Authentication runs entirely on **JWT stored in HttpOnly cookies**, so the
 frontend never handles a token itself. The frontend is provided by the
-Developer Akademie; everything behind `/api/` is this project.
+Developer Akademie and lives in
+[project.Quizly](https://github.com/Developer-Akademie-Backendkurs/project.Quizly);
+everything behind `/api/` is this project.
 
 ![Quizly API documentation](assets/preview.png)
 
@@ -194,6 +196,33 @@ ffmpeg -version
 
 > On the first quiz generation Whisper downloads its model file (about 75 MB
 > for `tiny`). This happens once and is cached afterwards.
+
+---
+
+## Frontend
+
+This repository contains the backend only. The matching frontend is provided
+by the Developer Akademie:
+
+```bash
+git clone https://github.com/Developer-Akademie-Backendkurs/project.Quizly.git
+```
+
+It is plain HTML, CSS and JavaScript, so any static file server will do. The
+simplest way is the **Live Server** extension in VS Code: right-click
+`index.html` and choose *Open with Live Server*.
+
+Two things have to line up:
+
+- The frontend expects the backend at `http://127.0.0.1:8000/api/`, which is
+  where `python manage.py runserver` puts it by default.
+- The origin the frontend is served from has to be listed in
+  `CORS_ALLOWED_ORIGINS`. Live Server uses port `5500`, which is already
+  covered by the default. If your setup uses a different port, add it to your
+  `.env`.
+
+Without the matching origin the browser blocks every request before it reaches
+Django, and the login will silently fail.
 
 ---
 

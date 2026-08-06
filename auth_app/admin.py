@@ -1,3 +1,1 @@
-from django.contrib import admin
-
-# Register your models here.
+# Django's built-in User model is already registered by django.contrib.auth.

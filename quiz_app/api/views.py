@@ -19,7 +19,7 @@ class QuizViewSet(viewsets.ModelViewSet):
         """Return own quizzes for the list, all quizzes for detail views."""
         if self.action == 'list':
             return Quiz.objects.filter(user=self.request.user)
-        return Quiz.objects.all()  
+        return Quiz.objects.all()
 
     def create(self, request, *args, **kwargs):
         """Create a quiz from the YouTube URL in the request body."""
