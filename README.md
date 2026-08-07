@@ -162,6 +162,8 @@ ffmpeg -version
    | `SECRET_KEY`           | Django secret key, required                          |
    | `GEMINI_API_KEY`       | API key from Google AI Studio, required              |
    | `CORS_ALLOWED_ORIGINS` | Comma separated frontend origins, optional           |
+   | `GEMINI_MODEL`         | Gemini model used for generation, optional           |
+   | `WHISPER_MODEL`        | Whisper model size, optional                         |
 
    Generate a secret key with:
 
@@ -173,6 +175,23 @@ ffmpeg -version
    `CORS_ALLOWED_ORIGINS` defaults to `http://localhost:5500,http://127.0.0.1:5500`
    (the ports used by the VS Code Live Server extension). Adjust it if your
    frontend runs elsewhere.
+
+   **`GEMINI_MODEL` is worth a look.** Which Gemini models an account may use
+   differs, so a model that works for one person can be unavailable for the
+   next. The template ships with `gemini-flash-latest`, which always points at
+   a current Flash model. If you get a `404 NOT_FOUND` when creating a quiz,
+   list the models available to your key and pick one with `flash` in its name:
+
+   ```python
+   from google import genai
+   client = genai.Client(api_key="your-key")
+   for m in client.models.list():
+       print(m.name)
+   ```
+
+   **`WHISPER_MODEL`** accepts `tiny`, `base`, `small`, `medium` and `large`.
+   Larger models transcribe more accurately but take longer and download more
+   data on first use. `base` is a good compromise for German content.
 
 5. **Apply the database migrations**
 
@@ -344,10 +363,9 @@ Creating a quiz expects a single field:
   afterwards.
 - **403 vs. 404:** accessing a quiz that belongs to someone else returns `403`,
   a quiz that does not exist returns `404`.
-- **Models are configurable** in `core/settings.py`: `WHISPER_MODEL` defaults to
-  `base` and can be set to `tiny`, `small`, `medium` or `large` to trade speed
-  for accuracy, and `GEMINI_MODEL` selects the Gemini variant used for
-  generation.
+- **Both AI models are configurable** through the `.env`: `WHISPER_MODEL` trades
+  transcription speed for accuracy, and `GEMINI_MODEL` selects which Gemini
+  variant generates the questions. Neither requires a code change.
 - **Temporary audio files** are written to `tmp/` and deleted right after the
   transcription, including when it fails.
 - **Cookie security:** the `secure` flag on both cookies follows `DEBUG`, so
