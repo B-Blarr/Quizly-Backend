@@ -32,7 +32,7 @@ def env_list(name, default=""):
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-3.6-flash"
-WHISPER_MODEL = "tiny"
+WHISPER_MODEL = "base"
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:

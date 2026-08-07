@@ -194,8 +194,8 @@ ffmpeg -version
 
    The API is now available at `http://127.0.0.1:8000/`.
 
-> On the first quiz generation Whisper downloads its model file (about 75 MB
-> for `tiny`). This happens once and is cached afterwards.
+> On the first quiz generation Whisper downloads its model file (about 140 MB
+> for `base`). This happens once and is cached afterwards.
 
 ---
 
@@ -344,9 +344,10 @@ Creating a quiz expects a single field:
   afterwards.
 - **403 vs. 404:** accessing a quiz that belongs to someone else returns `403`,
   a quiz that does not exist returns `404`.
-- **Models are configurable** in `core/settings.py`: `WHISPER_MODEL`
-  (`tiny`, `base`, `small`, `medium`, `large`) trades speed for accuracy, and
-  `GEMINI_MODEL` selects the Gemini variant used for generation.
+- **Models are configurable** in `core/settings.py`: `WHISPER_MODEL` defaults to
+  `base` and can be set to `tiny`, `small`, `medium` or `large` to trade speed
+  for accuracy, and `GEMINI_MODEL` selects the Gemini variant used for
+  generation.
 - **Temporary audio files** are written to `tmp/` and deleted right after the
   transcription, including when it fails.
 - **Cookie security:** the `secure` flag on both cookies follows `DEBUG`, so
