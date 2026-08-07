@@ -313,6 +313,7 @@ Base path: `/api/`
 | POST   | `/quizzes/`       | Generate a quiz from a YouTube URL     | Authenticated |
 | GET    | `/quizzes/`       | List the user's own quizzes            | Authenticated |
 | GET    | `/quizzes/{id}/`  | Quiz detail including all questions    | Owner only    |
+| PUT    | `/quizzes/{id}/`  | Replace title and description          | Owner only    |
 | PATCH  | `/quizzes/{id}/`  | Update the title and description       | Owner only    |
 | DELETE | `/quizzes/{id}/`  | Delete the quiz and all its questions  | Owner only    |
 
@@ -335,10 +336,12 @@ Creating a quiz expects a single field:
 - **`video_url` is normalised.** Whatever form the user submits, the quiz is
   stored with a `https://www.youtube.com/watch?v=<id>` URL, because that is the
   format the frontend needs to embed the video.
-- **`question_options`** is a JSON array of exactly four strings, and `answer`
-  always matches one of them verbatim. This is verified before saving; if the
-  generated quiz does not match, the request fails with `400` instead of
-  storing an unplayable quiz.
+- **`question_options`** is a JSON array of answer options, and `answer` always
+  matches one of them verbatim. That match is verified before saving; if it
+  fails, the request returns `400` instead of storing a quiz in which no answer
+  can ever be correct. The number of questions and options is requested in the
+  prompt and enforced by the response schema's structure, but not re-checked
+  afterwards.
 - **403 vs. 404:** accessing a quiz that belongs to someone else returns `403`,
   a quiz that does not exist returns `404`.
 - **Models are configurable** in `core/settings.py`: `WHISPER_MODEL`

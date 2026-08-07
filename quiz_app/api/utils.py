@@ -10,7 +10,6 @@ from yt_dlp.utils import YoutubeDLError
 
 from quiz_app.models import Question, Quiz
 
-client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 QUIZ_SCHEMA = {
     "type": "object",
@@ -125,6 +124,7 @@ def transcribe_audio(audio_path):
 
 def generate_quiz_data(transcript):
     """Ask Gemini to build a quiz from the transcript and return it."""
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
     response = client.models.generate_content(
         model=settings.GEMINI_MODEL,
         contents=f"{PROMPT}\n\n{transcript}",
