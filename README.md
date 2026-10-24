@@ -19,7 +19,8 @@ everything behind `/api/` is this project.
 
 One POST to `/api/quizzes/` runs the whole chain inside the request: yt-dlp fetches
 the audio, Whisper transcribes it locally, Gemini returns the quiz in a fixed JSON
-schema and the answers are validated before anything is saved.
+schema and the answers are validated before anything is saved. Because the
+request waits for the whole chain, a background task queue would be the next step.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.svg">

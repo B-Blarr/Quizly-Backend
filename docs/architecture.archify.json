@@ -292,7 +292,7 @@
         "22 tests, external services mocked",
         "download and validation errors return 400",
         "OpenAPI docs with Swagger UI and ReDoc",
-        "the whole chain runs inside one request"
+        "runs inside one request, a task queue would be the next step"
       ]
     }
   ]
