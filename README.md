@@ -15,6 +15,19 @@ everything behind `/api/` is this project.
 
 ---
 
+## Architecture
+
+One POST to `/api/quizzes/` runs the whole chain inside the request: yt-dlp fetches
+the audio, Whisper transcribes it locally, Gemini returns the quiz in a fixed JSON
+schema and the answers are validated before anything is saved.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.svg">
+  <img alt="Architecture: the frontend logs in through Auth, which sets JWT cookies, and posts a YouTube link to the Quiz API. Inside the Django backend yt-dlp and FFmpeg fetch the audio from YouTube, Whisper transcribes it locally, the transcript goes to the Gemini API, the returned quiz JSON is validated and saved in SQLite." src="docs/architecture-light.svg">
+</picture>
+
+---
+
 ## Features
 
 - JWT authentication via **HttpOnly cookies** (register, login, logout, refresh)

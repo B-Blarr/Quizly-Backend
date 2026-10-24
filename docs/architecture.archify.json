@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Quizly Backend, architecture",
+    "subtitle": "Turns a YouTube video into a multiple-choice quiz",
+    "quality_profile": "showcase",
+    "viewBox": [
+      980,
+      680
+    ],
+    "views": [
+      {
+        "id": "auth",
+        "label": "Signing in",
+        "focus": [
+          "frontend",
+          "auth",
+          "api"
+        ],
+        "note": "Login sets both tokens as HttpOnly cookies, so the frontend never touches a token. Logout blacklists the refresh token."
+      },
+      {
+        "id": "chain",
+        "label": "From link to quiz",
+        "focus": [
+          "frontend",
+          "api",
+          "youtube",
+          "ytdlp",
+          "whisper",
+          "gemini",
+          "check",
+          "db"
+        ],
+        "note": "One POST runs the whole chain: audio download, local transcription, Gemini, a check, the database. The quiz comes back as 201."
+      },
+      {
+        "id": "local",
+        "label": "What stays local",
+        "focus": [
+          "ytdlp",
+          "whisper",
+          "gemini"
+        ],
+        "note": "The audio is transcribed on the machine and deleted right after. Only the transcript text goes to Gemini."
+      }
+    ],
+    "output": "architecture.html"
+  },
+  "components": [
+    {
+      "id": "frontend",
+      "type": "external",
+      "label": "Quizly frontend",
+      "sublabel": "by Developer Akademie",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth",
+      "sublabel": "JWT in HttpOnly cookies",
+      "pos": [
+        305,
+        80
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Quiz API",
+      "sublabel": "CRUD, own quizzes only",
+      "pos": [
+        305,
+        230
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "youtube",
+      "type": "external",
+      "label": "YouTube",
+      "sublabel": "video source",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "ytdlp",
+      "type": "backend",
+      "label": "yt-dlp + FFmpeg",
+      "sublabel": "audio track as mp3",
+      "pos": [
+        305,
+        380
+      ],
+      "size": [
+        160,
+        72
+      ]
+    },
+    {
+      "id": "whisper",
+      "type": "backend",
+      "label": "Whisper",
+      "sublabel": "local transcription",
+      "pos": [
+        545,
+        380
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "gemini",
+      "type": "external",
+      "label": "Gemini API",
+      "sublabel": "structured output",
+      "pos": [
+        790,
+        380
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "check",
+      "type": "backend",
+      "label": "Validation",
+      "sublabel": "answer is in the options",
+      "pos": [
+        545,
+        530
+      ],
+      "size": [
+        150,
+        72
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "SQLite",
+      "sublabel": "users, quizzes, tokens",
+      "pos": [
+        305,
+        530
+      ],
+      "size": [
+        160,
+        72
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Django 6 + DRF backend",
+      "wraps": [
+        "auth",
+        "api",
+        "ytdlp",
+        "whisper",
+        "check",
+        "db"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "frontend-auth",
+      "from": "frontend",
+      "to": "auth",
+      "label": "login, refresh",
+      "variant": "security",
+      "labelDx": -7
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "POST /api/quizzes/",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "auth-api",
+      "from": "auth",
+      "to": "api",
+      "label": "user from access cookie",
+      "variant": "security",
+      "labelAt": [
+        455,
+        191
+      ]
+    },
+    {
+      "id": "api-ytdlp",
+      "from": "api",
+      "to": "ytdlp",
+      "label": "YouTube URL",
+      "variant": "emphasis"
+    },
+    {
+      "id": "youtube-ytdlp",
+      "from": "youtube",
+      "to": "ytdlp",
+      "label": "audio",
+      "variant": "default"
+    },
+    {
+      "id": "ytdlp-whisper",
+      "from": "ytdlp",
+      "to": "whisper",
+      "label": "mp3",
+      "variant": "emphasis"
+    },
+    {
+      "id": "whisper-gemini",
+      "from": "whisper",
+      "to": "gemini",
+      "label": "transcript",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight",
+      "labelDx": 10
+    },
+    {
+      "id": "gemini-check",
+      "from": "gemini",
+      "to": "check",
+      "label": "quiz JSON",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "check-db",
+      "from": "check",
+      "to": "db",
+      "label": "valid quiz",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "What the picture does not show",
+      "items": [
+        "only YouTube links are accepted, short links too",
+        "Gemini output is bound to a JSON schema",
+        "FFmpeg is used by yt-dlp and Whisper",
+        "the mp3 is deleted right after transcription",
+        "logout blacklists the refresh token"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Status",
+      "items": [
+        "runs locally with the Developer Akademie frontend",
+        "22 tests, external services mocked",
+        "download and validation errors return 400",
+        "OpenAPI docs with Swagger UI and ReDoc",
+        "the whole chain runs inside one request"
+      ]
+    }
+  ]
+}
