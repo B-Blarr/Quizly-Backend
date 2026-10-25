@@ -57,8 +57,8 @@ request waits for the whole chain, a background task queue would be the next ste
 | Component      | Version                                        |
 | -------------- | ---------------------------------------------- |
 | Language       | Python 3.12+ (required by Django 6)            |
-| Framework      | Django 6.0.7                                   |
-| API            | Django REST Framework 3.17.1                   |
+| Framework      | Django 6.0.9                                   |
+| API            | Django REST Framework 3.18.3                   |
 | Database       | SQLite                                         |
 | Auth           | djangorestframework-simplejwt 5.5.1 (cookies)  |
 | Video → Audio  | yt-dlp 2026.7.4 + FFmpeg                       |
