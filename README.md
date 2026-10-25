@@ -280,6 +280,9 @@ coverage report -m
 
 The tests never call YouTube, Whisper or Gemini, the pipeline is mocked.
 
+On every push and pull request, GitHub Actions checks the pinned packages in
+`requirements.txt` against the public vulnerability databases with `pip-audit`.
+
 ---
 
 ## Authentication
