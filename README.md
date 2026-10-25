@@ -174,6 +174,8 @@ ffmpeg -version
    | Variable               | Description                                          |
    | ---------------------- | ---------------------------------------------------- |
    | `SECRET_KEY`           | Django secret key, required                          |
+   | `DEBUG`                | Django debug mode, off unless set to `True`          |
+   | `ALLOWED_HOSTS`        | Comma separated host names, optional                 |
    | `GEMINI_API_KEY`       | API key from Google AI Studio, required              |
    | `CORS_ALLOWED_ORIGINS` | Comma separated frontend origins, optional           |
    | `GEMINI_MODEL`         | Gemini model used for generation, optional           |
@@ -188,7 +190,9 @@ ffmpeg -version
    Get a Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey).
    `CORS_ALLOWED_ORIGINS` defaults to `http://localhost:5500,http://127.0.0.1:5500`
    (the ports used by the VS Code Live Server extension). Adjust it if your
-   frontend runs elsewhere.
+   frontend runs elsewhere. `ALLOWED_HOSTS` defaults to `localhost,127.0.0.1,[::1]`.
+   Keep `DEBUG=True` from the template for local development: the cookies are
+   only sent over plain HTTP while it is on (see Conventions & Notes).
 
    **`GEMINI_MODEL` is worth a look.** Which Gemini models an account may use
    differs, so a model that works for one person can be unavailable for the
@@ -360,6 +364,14 @@ Creating a quiz expects a single field:
 
 ## Conventions & Notes
 
+- **Rate limits.** Login and registration share one limit of 10 requests per
+  minute and client. Creating a quiz is limited to 10 per hour and user,
+  because every quiz runs Whisper and a paid Gemini call. Beyond that the API
+  answers `429 Too Many Requests`. Reading and editing quizzes is not limited.
+  The counters live in Django's default in-memory cache, which is right for
+  `runserver`. Under Gunicorn every worker would count on its own, so a
+  deployment would need a shared cache such as the database cache. Behind a
+  reverse proxy, set `NUM_PROXIES=1` so the real client address is used.
 - **Quiz generation takes time.** A `POST /api/quizzes/` runs the whole
   pipeline synchronously: downloading the audio, transcribing it and querying
   Gemini. Depending on the video length this can take several minutes. The
