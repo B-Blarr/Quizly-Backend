@@ -1,6 +1,7 @@
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -25,6 +26,8 @@ class RegistrationView(APIView):
     """Register a new user account."""
 
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request):
         """Create a user or return the validation errors."""
@@ -44,6 +47,8 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     """Log a user in and store both tokens as HttpOnly cookies."""
 
     serializer_class = CookieTokenObtainPairSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request, *args, **kwargs):
         """Return the user's data and set the auth cookies."""

@@ -159,6 +159,16 @@ REST_FRAMEWORK = {
         'auth_app.api.authentication.CookieJWTAuthentication'
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Counted per client in Django's default cache. Creating a quiz runs
+    # Whisper and a paid Gemini call, so it gets the tightest limit.
+    'DEFAULT_THROTTLE_RATES': {
+        'auth': '10/minute',
+        'quiz_create': '10/hour',
+    },
+    # How many proxies sit in front of Django. Without this DRF would take
+    # the client IP from X-Forwarded-For, a header every client can fake to
+    # dodge the limits. 0 means the direct connection; set 1 behind nginx.
+    'NUM_PROXIES': int(os.getenv("NUM_PROXIES", "0")),
 }
 
 SIMPLE_JWT = {

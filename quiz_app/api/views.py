@@ -1,6 +1,7 @@
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from quiz_app.models import Quiz
 
@@ -14,6 +15,13 @@ class QuizViewSet(viewsets.ModelViewSet):
 
     serializer_class = QuizSerializer
     permission_classes = [IsOwner, IsAuthenticated]
+    throttle_scope = 'quiz_create'
+
+    def get_throttles(self):
+        """Limit only quiz creation, reading and editing stay unlimited."""
+        if self.action == 'create':
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     def get_queryset(self):
         """Return own quizzes for the list, all quizzes for detail views."""
