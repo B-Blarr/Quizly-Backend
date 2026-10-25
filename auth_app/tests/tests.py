@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -6,11 +7,25 @@ from rest_framework.test import APIClient, APITestCase
 User = get_user_model()
 
 
-class RegistrationTests(APITestCase):
+class ThrottleResetTestCase(APITestCase):
+    """Start every test with empty throttle counters.
+
+    Login, registration and quiz creation are throttled and the counters
+    live in the cache, so one test's requests would count against the next.
+    """
+
+    def setUp(self):
+        """Reset the throttle counters."""
+        super().setUp()
+        cache.clear()
+
+
+class RegistrationTests(ThrottleResetTestCase):
     """Tests for POST /api/register/."""
 
     def setUp(self):
         """Create a user whose email is already taken."""
+        super().setUp()
         self.user = User.objects.create_user(
             username='loginuser', password='SuperSecret123!',
             email='test@test.de')
@@ -56,11 +71,12 @@ class RegistrationTests(APITestCase):
         self.assertIn('email', response.data)
 
 
-class LoginTests(APITestCase):
+class LoginTests(ThrottleResetTestCase):
     """Tests for POST /api/login/."""
 
     def setUp(self):
         """Create the user used for logging in."""
+        super().setUp()
         self.user = User.objects.create_user(
             username='loginuser', password='SuperSecret123!',
             email='test@test.de')
@@ -95,11 +111,12 @@ class LoginTests(APITestCase):
             response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
 
 
-class LogoutTests(APITestCase):
+class LogoutTests(ThrottleResetTestCase):
     """Tests for POST /api/logout/."""
 
     def setUp(self):
         """Create a user and log the test client in."""
+        super().setUp()
         self.user = User.objects.create_user(
             username='loginuser', password='SuperSecret123!',
             email='test@test.de')
@@ -138,11 +155,12 @@ class LogoutTests(APITestCase):
             response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
 
 
-class TokenRefreshTests(APITestCase):
+class TokenRefreshTests(ThrottleResetTestCase):
     """Tests for POST /api/token/refresh/."""
 
     def setUp(self):
         """Create a user and log the test client in."""
+        super().setUp()
         self.user = User.objects.create_user(
             username='loginuser', password='SuperSecret123!',
             email='test@test.de')
@@ -167,3 +185,32 @@ class TokenRefreshTests(APITestCase):
         response = client.post(reverse('token_refresh'))
         self.assertEqual(
             response.status_code, status.HTTP_401_UNAUTHORIZED, response.data)
+
+
+class ThrottleTests(ThrottleResetTestCase):
+    """Repeated login attempts are slowed down."""
+
+    def test_eleventh_login_in_a_minute_is_rejected(self):
+        """Ten tries go through, the eleventh answers 429."""
+        payload = {'username': 'nobody', 'password': 'wrong'}
+        for _ in range(10):
+            response = self.client.post(
+                reverse('login'), payload, format='json')
+            self.assertNotEqual(
+                response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        response = self.client.post(reverse('login'), payload, format='json')
+        self.assertEqual(
+            response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+    def test_faked_forwarded_header_does_not_reset_the_limit(self):
+        """A new X-Forwarded-For per request still counts as one client."""
+        payload = {'username': 'nobody', 'password': 'wrong'}
+        for number in range(10):
+            self.client.post(
+                reverse('login'), payload, format='json',
+                HTTP_X_FORWARDED_FOR=f'10.0.0.{number}')
+        response = self.client.post(
+            reverse('login'), payload, format='json',
+            HTTP_X_FORWARDED_FOR='10.0.0.99')
+        self.assertEqual(
+            response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)

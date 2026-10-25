@@ -30,6 +30,11 @@ def env_list(name, default=""):
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
+def env_bool(name, default="False"):
+    """Read a true/false switch from the environment."""
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes")
+
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
@@ -43,9 +48,10 @@ if not SECRET_KEY:
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Off unless the .env switches it on, so a forgotten setting fails safe.
+DEBUG = env_bool("DEBUG")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]")
 
 
 # Application definition
@@ -153,6 +159,16 @@ REST_FRAMEWORK = {
         'auth_app.api.authentication.CookieJWTAuthentication'
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Counted per client in Django's default cache. Creating a quiz runs
+    # Whisper and a paid Gemini call, so it gets the tightest limit.
+    'DEFAULT_THROTTLE_RATES': {
+        'auth': '10/minute',
+        'quiz_create': '10/hour',
+    },
+    # How many proxies sit in front of Django. Without this DRF would take
+    # the client IP from X-Forwarded-For, a header every client can fake to
+    # dodge the limits. 0 means the direct connection; set 1 behind nginx.
+    'NUM_PROXIES': int(os.getenv("NUM_PROXIES", "0")),
 }
 
 SIMPLE_JWT = {

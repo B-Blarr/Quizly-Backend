@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -18,11 +19,25 @@ from quiz_app.models import Question, Quiz
 User = get_user_model()
 
 
-class QuizTests(APITestCase):
+class ThrottleResetTestCase(APITestCase):
+    """Start every test with empty throttle counters.
+
+    Login, registration and quiz creation are throttled and the counters
+    live in the cache, so one test's requests would count against the next.
+    """
+
+    def setUp(self):
+        """Reset the throttle counters."""
+        super().setUp()
+        cache.clear()
+
+
+class QuizTests(ThrottleResetTestCase):
     """Tests for the quiz endpoints and the generation helpers."""
 
     def setUp(self):
         """Log in one user and create a quiz for them and for another user."""
+        super().setUp()
         self.user = User.objects.create_user(
             username='quizuser', password='SuperSecret123!',
             email='test@test.de',
@@ -77,6 +92,26 @@ class QuizTests(APITestCase):
             reverse('quiz-detail', args=[self.quiz.id]))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Question.objects.count(), 0)
+
+    @patch('quiz_app.api.views.create_quiz_from_url')
+    def test_eleventh_quiz_in_an_hour_is_rejected(self, mock_create):
+        """Ten quizzes go through, the eleventh answers 429."""
+        mock_create.return_value = self.quiz
+        payload = {'url': 'https://www.youtube.com/watch?v=abc123'}
+        for _ in range(10):
+            response = self.client.post(
+                reverse('quiz-list'), payload, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.client.post(
+            reverse('quiz-list'), payload, format='json')
+        self.assertEqual(
+            response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+    def test_reading_quizzes_is_not_throttled(self):
+        """Listing stays possible far beyond the creation limit."""
+        for _ in range(15):
+            response = self.client.get(reverse('quiz-list'))
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     @patch('quiz_app.api.views.create_quiz_from_url')
     def test_create_quiz(self, mock_create):
